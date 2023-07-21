@@ -5,7 +5,7 @@ const findUsers = async (req, res) => {
   try {
     const users = await User.findAll({
       where: {
-        status: true,
+        status: 'available',
       },
     });
 
@@ -30,7 +30,7 @@ const findUser = async (req, res) => {
     const user = await User.findOne({
       where: {
         id,
-        status: true,
+        status: 'available',
       },
     });
 
@@ -85,7 +85,7 @@ const updateUser = async (req, res) => {
     const user = await User.findOne({
       where: {
         id,
-        status: true,
+        status: 'available',
       },
     });
 
@@ -120,7 +120,7 @@ const deleteUser = async (req, res) => {
     const user = await User.findOne({
       where: {
         id,
-        status: true,
+        status: 'available',
       },
     });
 
@@ -132,7 +132,7 @@ const deleteUser = async (req, res) => {
     }
 
     user.update({
-      status: false,
+      status: 'unavailable',
     });
 
     return res.status(200).json({

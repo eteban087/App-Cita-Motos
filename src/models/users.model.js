@@ -17,27 +17,24 @@ const User = db.define('user', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
   },
 
-  password:{
+  password: {
     type: DataTypes.STRING,
     allowNull: false,
   },
 
-  role:{
-    type: DataTypes.ENUM("employee","client"),
+  role: {
+    type: DataTypes.ENUM('employee', 'client'),
     allowNull: false,
   },
 
-  status:{
-    type: DataTypes.BOOLEAN,
+  status: {
+    type: DataTypes.ENUM('available', 'unavailable'),
     allowNull: false,
-    defaultValue: true
-  }
-
-
+    defaultValue: 'available',
+  },
 });
-
 
 module.exports = User;
