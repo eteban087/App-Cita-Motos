@@ -1,13 +1,13 @@
-const {Sequelize} = require("sequelize");
+const { Sequelize } = require('sequelize');
 
 const db = new Sequelize({
-    dialect: "postgres",
-    database: "motosdbgen26",
-    username: "postgres",
-    password: "password",
-    port: 5432,
-    host: "localhost",
-    logging: false
-})
+  dialect: process.env.DB_DIALECT,
+  database: process.env.DB_DATABASE,
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  port: +process.env.DB_PORT,
+  host: process.env.DB_HOST,
+  logging: false,
+});
 
-module.exports = {db}
+module.exports = { db };

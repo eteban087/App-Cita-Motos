@@ -1,16 +1,37 @@
 const express = require('express');
 const router = express();
-const { validationsUsers } = require('../middlewares/users.middlewares');
+
+const {
+  validationsUsers,
+  validUser,
+} = require('../middlewares/users.middlewares');
+
+const {
+  createUserValidation,
+  logInUserValidation,
+} = require('../middlewares/validations.middlewares');
 const {
   findUsers,
   findUser,
   createUser,
   updateUser,
   deleteUser,
+  logIn,
 } = require('../controller/users.controller');
 
-router.route('/').get(findUsers).post(validationsUsers, createUser);
+router.use('/login', logInUserValidation, logIn);
 
-router.route('/:id').get(findUser).patch(updateUser).delete(deleteUser);
+router
+
+  .route('/')
+  .get(findUsers)
+  .post(createUserValidation, validationsUsers, createUser);
+
+router
+  .use('/:id', validUser)
+  .route('/:id')
+  .get(findUser)
+  .patch(updateUser)
+  .delete(deleteUser);
 
 module.exports = router;

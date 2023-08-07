@@ -1,152 +1,122 @@
+const AppError = require('../helpers/appError');
+const catchAsync = require('../helpers/catchAsync');
+const generateJWT = require('../helpers/jsonwebtoken');
 const User = require('../models/users.model');
+const bycript = require('bcryptjs');
 
 // ===========================FUNCION PARA OBTENER TODOS LOS USUARIOS========================
-const findUsers = async (req, res) => {
-  try {
-    const users = await User.findAll({
-      where: {
-        status: 'available',
-      },
-    });
+const findUsers = catchAsync(async (req, res, next) => {
+  console.log(req.headers.authorization);
+  const users = await User.findAll({
+    where: {
+      status: 'available',
+    },
+  });
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'users retrieved successfully!',
-      results: users.length,
-      users,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'fail',
-      message: 'something went very wrong!',
-      error,
-    });
-  }
-};
+  return res.status(200).json({
+    status: 'success',
+    message: 'users retrieved successfully!',
+    results: users.length,
+    users,
+  });
+});
+
 // ===========================FUNCION PARA BUSCAR UN USUARIO========================
-const findUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findOne({
-      where: {
-        id,
-        status: 'available',
-      },
-    });
+const findUser = catchAsync(async (req, res, next) => {
+  const { user } = await req;
 
-    if (!user) {
-      return res.status(404).json({
-        status: 'Error',
-        message: `the user with id ${id} does not exist!`,
-      });
-    }
+  return res.status(200).json({
+    status: 'success',
+    message: 'user retrieved successfully!',
+    user,
+  });
+});
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'user retrieved successfully!',
-      user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'fail',
-      message: 'something went very wrong!',
-      error,
-    });
-  }
-};
 // ===========================FUNCION PARA CREAR UN USUARIO========================
-const createUser = async (req, res) => {
+const createUser = catchAsync(async (req, res, next) => {
   const { role, password, email, name } = req.body;
+
+  const salt = await bycript.genSalt(12);
+  const encryptedPassword = await bycript.hash(password, salt);
+
   const user = await User.create({
     name,
-    password,
-    email,
+    password: encryptedPassword,
+    email: email.toLowerCase().trim(),
     role,
   });
-  try {
-    return res.status(201).json({
-      status: 'success',
-      message: 'user created successfully!',
-      user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'fail',
-      message: 'something went very wrong!',
-      error,
+
+  const token = await generateJWT(user.id);
+
+  return res.status(201).json({
+    status: 'success',
+    message: 'user created successfully!',
+    token,
+    user,
+  });
+});
+
+// =======================FUNCION DEL LOGIN=======================
+const logIn = catchAsync(async (req, res, next) => {
+  const { password, email } = req.body;
+  const user = await User.findOne({
+    where: {
+      status: 'available',
+      email: email.toLowerCase().trim(),
+    },
+  });
+
+  if (!user) {
+    return next(
+      new AppError(`the user with email ${email} does not exist!`),
+      404
+    );
+  }
+
+  if (!(await bycript.compare(password, user.password))) {
+    return res.status(400).json({
+      status: 'Error',
+      message: `Incorrect email or password`,
     });
   }
-};
+
+  const token = await generateJWT(user.id);
+
+  return res.status(200).json({
+    status: 'success',
+    token: token,
+    user,
+  });
+});
+
 // ===========================FUNCION PARA ACTUALIZAR USUARIOS========================
-const updateUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { email, name } = req.body;
-    const user = await User.findOne({
-      where: {
-        id,
-        status: 'available',
-      },
-    });
+const updateUser = catchAsync(async (req, res, next) => {
+  const { email, name } = req.body;
+  const { user } = await req;
 
-    if (!user) {
-      return res.status(404).json({
-        status: 'Error',
-        message: `the user with id ${id} does not exist!`,
-      });
-    }
+  user.update({
+    email,
+    name,
+  });
 
-    user.update({
-      email,
-      name,
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'user update successfully!',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'fail',
-      message: 'something went very wrong!',
-      error,
-    });
-  }
-};
+  return res.status(200).json({
+    status: 'success',
+    message: 'user update successfully!',
+  });
+});
 // ===========================FUNCION PARA ELIMINAR USUARIOS========================
-const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findOne({
-      where: {
-        id,
-        status: 'available',
-      },
-    });
+const deleteUser = catchAsync(async (req, res, next) => {
+  const { user } = await req;
 
-    if (!user) {
-      return res.status(404).json({
-        status: 'Error',
-        message: `the user with id ${id} does not exist!`,
-      });
-    }
+  user.update({
+    status: 'unavailable',
+  });
 
-    user.update({
-      status: 'unavailable',
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'User delete',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: 'fail',
-      message: 'something went very wrong!',
-      error,
-    });
-  }
-};
+  return res.status(200).json({
+    status: 'success',
+    message: 'User delete',
+  });
+});
 
 module.exports = {
   findUsers,
@@ -154,4 +124,5 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  logIn,
 };
