@@ -4,6 +4,8 @@ const router = express();
 const {
   validationsUsers,
   validUser,
+  protectAccountOwner,
+  protect,
 } = require('../middlewares/users.middlewares');
 
 const {
@@ -24,14 +26,15 @@ router.use('/login', logInUserValidation, logIn);
 router
 
   .route('/')
-  .get(findUsers)
+  .get(protect, findUsers)
   .post(createUserValidation, validationsUsers, createUser);
+router.use(protect);
 
 router
   .use('/:id', validUser)
   .route('/:id')
   .get(findUser)
-  .patch(updateUser)
-  .delete(deleteUser);
+  .patch(protectAccountOwner, updateUser)
+  .delete(protectAccountOwner, deleteUser);
 
 module.exports = router;

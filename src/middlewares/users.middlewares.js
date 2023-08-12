@@ -98,6 +98,16 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+const protectAccountOwner = catchAsync(async (req, res, next) => {
+  const { user, sessionUser } = req;
+
+  if (user.id !== sessionUser.id) {
+    return next(new AppError('You do not own this account.', 401));
+  }
+
+  next();
+});
+
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.sessionUser.role)) {
@@ -110,4 +120,10 @@ const restrictTo = (...roles) => {
   };
 };
 
-module.exports = { validationsUsers, protect, restrictTo, validUser };
+module.exports = {
+  validationsUsers,
+  protect,
+  restrictTo,
+  validUser,
+  protectAccountOwner,
+};

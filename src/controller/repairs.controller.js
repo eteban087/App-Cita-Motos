@@ -1,5 +1,6 @@
 const catchAsync = require('../helpers/catchAsync');
 const Repairs = require('../models/repairs.model');
+const User = require('../models/users.model');
 
 // ======================FUNCION PARA OBTENER TODOS LOS REPAIRS===============
 const findRepairs = catchAsync(async (req, res) => {
@@ -7,7 +8,15 @@ const findRepairs = catchAsync(async (req, res) => {
     where: {
       status: 'pending',
     },
+
+    include: {
+      model: User,
+      attributes: {
+        exclude: ['password'],
+      },
+    },
   });
+
   return res.status(200).json({
     status: 'success',
     message: 'repairs retrieved successfully!',
